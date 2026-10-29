@@ -1,0 +1,6 @@
+The ChatGPT / OpenAI logo belongs to OpenAI and is not covered by this project's MIT license.
+Downloaded unchanged from the official ChatGPT app FAQ on 2026-10-29:
+https://help.openai.com/en/articles/8142208-chatgpt-ios-and-android-app-faq
+Asset:
+https://images.ctfassets.net/j22is2dtoxu1/intercom-img-b10ab9f4d70661d93db667c0/9716417ee02ffe9988beb6aeb2507856/openai-logo_2B-282-29.png
+This is an independent community plugin, not an official OpenAI product.

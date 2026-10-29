@@ -1,43 +1,55 @@
-name: Publish Release
-
+name: Build and test
 on:
   workflow_dispatch:
   push:
-    branches: [ main ]
-    paths-ignore: 
-      - .github/workflows/*
-      
+    branches: [main]
+    tags: ['v*']
+  pull_request:
 permissions:
   contents: write
-      
 jobs:
-  publish:
-    runs-on: ubuntu-latest
-    env:
-      python_ver: 3.10
+  build:
+    runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v2
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v2
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
         with:
-          python-version: ${{ matrix.python-version }}
-      - name: get version
-        id: version
-        uses: notiz-dev/github-action-json-property@release
-        with: 
-          path: 'plugin.json'
-          prop_path: 'Version'
-      - run: echo ${{steps.version.outputs.prop}} 
-      - name: Install dependencies
+          dotnet-version: '9.0.x'
+      - name: Validate release metadata
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: pwsh
         run: |
-          python -m pip install --upgrade pip
-          pip install -r ./requirements.txt -t ./lib
-          zip -r Flow.Launcher.Plugin.ChatGPT.zip . -x '*.git*'
-      - name: Publish
-        if: success()
-        uses: softprops/action-gh-release@v1
+          $plugin = Get-Content plugin.json -Raw | ConvertFrom-Json
+          $project = [xml](Get-Content src/Flow.Launcher.Plugin.ChatGPT.csproj -Raw)
+          if ($env:GITHUB_REF_NAME -ne "v$($plugin.Version)") { throw 'Git tag must match plugin.json version.' }
+          if ([string]$project.Project.PropertyGroup.Version -ne $plugin.Version) { throw 'Project and plugin versions differ.' }
+          if ($plugin.Website -ne "https://github.com/$env:GITHUB_REPOSITORY") { throw 'Run scripts/Configure-Publishing.ps1 for this repository before tagging.' }
+      - name: Get Flow Launcher plugin API
+        shell: pwsh
+        run: |
+          $release = Invoke-RestMethod 'https://api.github.com/repos/Flow-Launcher/Flow.Launcher/releases/tags/v2.1.3'
+          $asset = $release.assets | Where-Object { $_.name -match 'Portable.*x64.*zip$|win-x64.*zip$' } | Select-Object -First 1
+          if (-not $asset) { $asset = $release.assets | Where-Object { $_.name -like '*.zip' } | Select-Object -First 1 }
+          if (-not $asset) { throw 'Flow Launcher archive not found.' }
+          Invoke-WebRequest $asset.browser_download_url -OutFile flow.zip
+          Expand-Archive flow.zip -DestinationPath .flow-reference
+          $api = Get-ChildItem .flow-reference -Filter Flow.Launcher.Plugin.dll -Recurse | Select-Object -First 1
+          if (-not $api) { throw 'Flow Launcher plugin API not found.' }
+          "FLOW_REFERENCE=$($api.DirectoryName)" >> $env:GITHUB_ENV
+      - name: Test
+        run: dotnet run --project tests/Tests.csproj -c Release
+      - name: Build package
+        shell: pwsh
+        run: .\build.ps1 -FlowLauncherDirectory $env:FLOW_REFERENCE -Dotnet dotnet
+      - uses: actions/upload-artifact@v4
         with:
-          files: 'Flow.Launcher.Plugin.ChatGPT.zip'
-          tag_name: "v${{steps.version.outputs.prop}}"
+          name: ChatGPTModels-plugin
+          path: artifacts/Flow.Launcher.Plugin.ChatGPTModels.zip
+      - name: Publish release
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: pwsh
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create $env:GITHUB_REF_NAME artifacts/Flow.Launcher.Plugin.ChatGPTModels.zip --repo $env:GITHUB_REPOSITORY --verify-tag --title "ChatGPT Models $env:GITHUB_REF_NAME" --notes-file RELEASE_NOTES.md
+          if ($LASTEXITCODE -ne 0) { throw 'GitHub Release publishing failed.' }

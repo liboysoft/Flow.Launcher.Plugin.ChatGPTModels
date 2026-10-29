@@ -1,79 +1,90 @@
-# Flow Launcher ChatGPT Plugin
-This plugin allows you to use OpenAI's ChatGPT models (gpt-3.5-turbo and gpt-4) with [Flow Launcher](https://www.flowlauncher.com/).
+# ChatGPT Models
 
-![Demo video of the Flow Launcher ChatGPT Plugin](https://i.imgur.com/WQwNY7y.gif)
+[English](README.md) | [简体中文](README.zh-CN.md)
+
+A Flow Launcher plugin for chatting with OpenAI-compatible services, with model discovery and selection in a native settings panel.
+
+**Author:** liboy · **Version:** 1.0.0 · **License:** MIT
 
 ## Features
-- 💡 Set which chat model you want to use (gpt-3.5-turbo or gpt-4)
-- 📝 Use keywords to select if you want a short, long or standard answer
-- 💬 Add custom keywords and system prompts to change the style and content of the output
-- 🗃️ Copy the answer or open it in a new text file
-- ✋ Activate the query via a custom "stop keyword"
 
-## Prerequisites
-1. An account at OpenAI.
-2. A payment method configured in your OpenAI profile [here](https://platform.openai.com/account/billing/payment-methods).
-3. An API key for OpenAI that can be retrieved [here](https://platform.openai.com/account/api-keys).
+- Add multiple endpoints with separate addresses, API keys, model lists, and selected models.
+- Fetch models on demand, then select a model from the dropdown or enter a model ID manually.
+- Keep cached lists and selections when refreshing fails or is cancelled.
+- Configure a custom models URL, system prompt, and prompt terminator.
+- Copy answers, open them in a text editor, or optionally save conversations locally.
+
+The settings UI is currently in Simplified Chinese. Chat prompts and answers can use any language supported by your model.
+
+![Settings with sample models](docs/settings.png)
+
+## Requirements
+
+Windows and Flow Launcher **2.1.3 or later**. This is a C# / WPF plugin targeting .NET 9. Python is not required to run the release package.
+
+The service must support OpenAI-style **Chat Completions** (`POST /chat/completions`). Model discovery uses `GET /models` and a `data[].id` response. Responses-only and native Anthropic endpoints are not supported.
 
 ## Installation
-1. Download and install [Flow Launcher](https://www.flowlauncher.com/).
-2. Launch Flow Launcher, then enter `Settings` to open its settings.
-3. Go to the `Plugin Store` module.
-4. Search for `ChatGPT`.
-5. Click `ChatGPT` and then `Install`.
-6. `Flow Launcher` should automatically restart. If not, manually restart `Flow Launcher`.
-7. Go to the `Plugins` module in Flow Launcher.
-8. The ChatGPT plugin should be visible. Select it.
-9. Paste your OpenAI API key in the API Key field.
-10. Adjust the setting (see below) to your own liking.
-11. Run the 'Save Settings' command in Flow Launcher.
 
-## Usage
-### Basic
-1. Activate by using the `ai` keyword.
-2. Type any prompt and add the stop keyword at the end (default: `||`).
-3. Wait until the list is updated.
-4. Copy the content or open it in a new text file.
+After a release is published, download the ZIP from [GitHub Releases](https://github.com/liboysoft/Flow.Launcher.Plugin.ChatGPTModels/releases), or enter this in Flow Launcher:
 
-### Using system prompts
-System prompts are the messages that are being sent to ChatGPT to set the behavior of the responses. System prompts can be activated by adding a Keyword at the start of the sentences. When no Keyword is found, the default system prompt will be used (see below).
+```text
+pm install https://github.com/liboysoft/Flow.Launcher.Plugin.ChatGPTModels/releases/download/v1.0.0/Flow.Launcher.Plugin.ChatGPTModels.zip
+```
 
-By default the plugin contains the following system prompts:
-|Keyword | System Prompt |
-|---------|---------------|
-|normal|You are an all-knowing AI bot.|
-|short|You are an all-knowing AI bot. All your answers are short, to the point, and don't give any additional context.|
-|long|You are an all-knowing AI bot. All your answers are in-depth and give both a step-by-step explanation how you came to that answer, as well as references to the resources you used.|
+The plugin has not been submitted to the Flow plugin store by this local preparation step. Once accepted, it can also be installed from the store.
 
-The different outputs for the prompt "Test" are as follows:
-|Keyword| Output|
-|--------|-------|
-|normal|I'm here to help. How may I assist you with your test?|
-|short|Passed.|
-|long|As an all-knowing AI bot, when I receive the input "test," I determine whether you are asking me to provide a test-related response or evaluate my knowledge and capabilities. Here, your query is brief and ambiguous, but I will provide an example of how I process and respond to questions. Step 1: Analyze the input: I examine the key term "test" and search for relevant context or additional details to understand your intention. Step 2: Generate a response: Based on your input, I try to cover the evident possibilities in my reply, thus accommodating your potential purpose. This includes testing my understanding, problem-solving capabilities, or demonstrating my knowledge on a specific topic. Step 3: Retrieve relevant resources: Since you did not provide specific details with your query, I cannot include references or resources that support my response. However, a more contextually-rich question will allow me to conduct comprehensive research and cite appropriate resources If you can provide additional information or clarify the context for your query, I will be able to generate an in-depth response based on your request. 
+## Configure and use
 
-## Adding your own system prompts
-You can add your own prompts in the following way:
-1. Open Flow Launcher.
-2. Type `Settings`.
-3. Go to Plugins -> ChatGPT.
-4. Click the small folder icon.
-5. In the folder that opens, open `system_messages.csv`.
-6. In the first column, add a new Keyword (without spaces).
-7. In the second column, add the System Prompt that you would like to trigger with that Keyword.
-8. Save the file.
+1. Open Flow Launcher settings → Plugins → **ChatGPT Models**.
+2. Select or add an endpoint. Enter its name, API address, and API key. Local services may allow an empty key.
+3. Click **拉取模型** (Fetch models). Select a model under **聊天模型**, or type its ID.
+4. Enable **将此端点用于聊天** (Use this endpoint for chat), then click **保存设置** (Save settings).
+5. Ask a question and finish it with the terminator, `||` by default:
 
-Check out [this Github page](https://github.com/f/awesome-chatgpt-prompts) for some awesome prompts.
+```text
+ai What is the symbol for the British pound? ||
+ai short Explain DNS ||
+ai long Explain DNS ||
+```
 
-## Settings
-|Setting|Description|Default value|
-|-------|-----------|-------------|
-|Action keyword|keyword to type to enable this plugin|_ai_|
-|API Key|API Key to use with OpenAI's API's. Can be found [here](https://platform.openai.com/account/api-keys).|_none_|
-|Model|The ChatGPT model version that will be used to call the API. Note: you need access to the model to be able to use it.|_gpt-3.5-turbo_|
-|Prompt stop|Characters at the end of the sentence that will trigger the search| &#124;&#124; |
-|Default system prompt|The default keyword that will be used to lookup a System Prompt when no specific prompt has been given.| _normal_ |
-|Custom URL|Custom OpenAI Format API endpoint|_https://api.openai.com/v1/chat/completions_|
+API addresses may be a base URL such as `https://host/v1`, a full `https://host/v1/chat/completions` URL, or a local HTTP address. A bare hostname defaults to `/v1`; custom path prefixes are preserved. Leave the models URL empty to derive `/models`, or specify a complete custom catalog URL. The configured endpoint key is sent to that custom URL.
 
-# Backlog
-* Ability to take into account the context of the previous prompts.
+Fetching does not select a model automatically. Click Save settings after selecting the endpoint and model. Editing an address or key clears the old catalog while keeping the selected model ID. The model list may include non-chat models; choose one that supports Chat Completions.
+
+For custom prompt keywords, place a UTF-8 `system_messages.csv` in the installed plugin directory, then reload the plugin. It uses a header and semicolon-separated keyword / system-prompt columns, with normal CSV quoting.
+
+## Storage and migration
+
+API keys are stored in the local plugin settings JSON. Do not publish settings or real keys. Conversation saving is opt-in and writes `Conversations.txt` in the plugin settings directory.
+
+This independent release uses a new plugin ID and assembly name. Earlier local builds and the original plugin keep their own settings. To migrate, exit Flow Launcher, back up the old `Settings.json`, and copy it into the new `Flow.Launcher.Plugin.ChatGPTModels` settings directory. The original Python settings schema can also be read. Both plugins default to `ai`; change one keyword in Flow settings if you keep both installed.
+
+## Build and test
+
+Install the .NET 9 SDK and Flow Launcher. In PowerShell:
+
+```powershell
+dotnet run --project tests/Tests.csproj -c Release
+.\build.ps1
+# For a portable/custom installation:
+.\build.ps1 -FlowLauncherDirectory 'D:\Apps\FlowLauncher'
+```
+
+The build produces `artifacts/Flow.Launcher.Plugin.ChatGPTModels.zip`. It does not install the plugin. Tests use simulated HTTP responses and actual WPF controls; they do not require API credentials. The generated settings preview is at `artifacts/settings-preview.png`.
+
+The current entry point is under `src/`. Original Python files, `lib/`, and the old settings template are retained as reference and are not distributed in the release ZIP.
+
+## Troubleshooting
+
+A successful model fetch does not prove that the chat endpoint exists. If chat returns HTTP 404, check that the base URL points to the inference API, and that reverse-proxy rules forward chat requests to the correct service. Changing the catalog URL cannot fix an absent chat route. Authentication failures, rate limits, connection errors, and timeouts are reported separately.
+
+## Publishing
+
+See [PUBLISHING.md](PUBLISHING.md) for the GitHub release and Flow plugin store submission process. The tag-triggered workflow builds and releases the plugin ZIP. The generated store submission manifest is under `publishing/`.
+
+## Credits and license
+
+Based on [MichielvanBeers/Flow.Launcher.Plugin.ChatGPT](https://github.com/MichielvanBeers/Flow.Launcher.Plugin.ChatGPT). Original copyright notices are preserved; modifications are by liboy. See [LICENSE](LICENSE).
+
+The ChatGPT / OpenAI logo belongs to OpenAI; see [Images/NOTICE.txt](Images/NOTICE.txt) for the official asset source. This is an independent community plugin and is not affiliated with or endorsed by OpenAI.

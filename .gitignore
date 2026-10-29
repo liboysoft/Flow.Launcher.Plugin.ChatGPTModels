@@ -1,4 +1,10 @@
 # Byte-compiled / optimized / DLL files
+.dotnet/
+artifacts/
+.flow-reference/
+flow.zip
+**/bin/
+**/obj/
 __pycache__/
 *.py[cod]
 *$py.class
